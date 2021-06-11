@@ -1,0 +1,17 @@
+Extract.Date,CCG.Code,CCG.Name,Breakdown.Field,Breakdown.Value,Patient.Count,CCG20CD,pop19
+20/03/2021,ENG,ENGLAND,Disease Group,Transplants (Solid),55955,"",56286961
+20/03/2021,ENG,ENGLAND,Disease Group,Cancer (Solid with Chemotherapy),130593,"",56286961
+20/03/2021,ENG,ENGLAND,Disease Group,Cancer (Lung with Radical Radiotherapy),3042,"",56286961
+20/03/2021,ENG,ENGLAND,Disease Group,Cancer (Haematological within 24 months),200567,"",56286961
+20/03/2021,ENG,ENGLAND,Disease Group,Transplants (Haematological within 6 months),2359,"",56286961
+20/03/2021,ENG,ENGLAND,Disease Group,Transplants (Haematological with Immunosuppression),826,"",56286961
+20/03/2021,ENG,ENGLAND,Disease Group,Respiratory (Severe Asthma),188077,"",56286961
+20/03/2021,ENG,ENGLAND,Disease Group,Respiratory (Severe COPD),546601,"",56286961
+20/03/2021,ENG,ENGLAND,Disease Group,Respiratory (Severe Permanent),133418,"",56286961
+20/03/2021,ENG,ENGLAND,Disease Group,Corticosteroid Safety Card,1631,"",56286961
+20/03/2021,ENG,ENGLAND,Disease Group,Rare genetic metabolic and autoimmune diseases,356339,"",56286961
+20/03/2021,ENG,ENGLAND,Disease Group,Immunosuppression Therapy,118193,"",56286961
+20/03/2021,ENG,ENGLAND,Disease Group,Pregnant with Congenital Heart Defect,4989,"",56286961
+20/03/2021,ENG,ENGLAND,Disease Group,Learning Disabilities,24808,"",56286961
+20/03/2021,ENG,ENGLAND,Disease Group,Chronic Kidney Disease,62406,"",56286961
+20/03/2021,ENG,ENGLAND,Disease Group,Added by COVID-19 Population Risk Assessment,1508223,"",56286961

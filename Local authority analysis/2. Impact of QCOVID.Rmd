@@ -1,0 +1,270 @@
+---
+title: "QCOVID algorithm"
+subtitle: "Impact on the number of people on the Shielded Patient List in England"
+author: "Sebastien Peytrignet, The Health Foundation"
+date: "4/6/2021"
+output:
+  prettydoc::html_pretty:
+    theme: leonids
+    highlight: github
+    toc: TRUE
+---
+
+```{r setup.A, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+#Load packages
+if (!require("pacman")) install.packages("pacman")
+pacman::p_load(dplyr,stringr,ggplot2,easycsv,
+               gmodels,Rmisc,DescTools,data.table,
+               tibble,plotly,lubridate,
+               here,RColorBrewer,ggthemes,hrbrthemes,
+               tidyverse,showtext,
+               knitr,kableExtra)
+
+#Clean up the global environment
+rm(list = ls())
+
+#Set directory where inputs are saved
+#rawdatadir <- "M:/Analytics/Networked Data Lab/Shielding/Shielding Behavioural Survey/"
+
+#Git directory
+gitdir <- dirname(rstudioapi::getSourceEditorContext()$path)
+
+#Set directory
+#setwd(rawdatadir)
+
+##################################################
+################### Load clean data ##############
+##################################################
+
+fread_folder(paste0(gitdir,"/Clean data/"), extension = "CSV")
+
+```
+
+## Number of people added by QCOVID by week
+
+People added using the QCOVID algorithm first appeared in the 15th of February extract of the Shielded Patient List (~800,000 additions) and by the 22nd of February over 1.5 million people had been added this way. This number has remained relatively stable until the end of March, as have the number of people added through the national methodology.
+
+```{r weekly, echo=FALSE, message=FALSE, warning=FALSE,fig.width=9,fig.height=7}
+
+QCOVID_numbers_data <- SPL_by_LA_All_incl_ENG %>%
+  filter(.,LA.Name=="ENGLAND") %>%
+  mutate(.,Patient.Count.QCOVID=ifelse(is.na(Patient.Count.QCOVID),0,Patient.Count.QCOVID)) %>%
+  select(.,Extract.Date,Patient.Count,Shielders_pct,Patient.Count.QCOVID,Patient.Count.nonQCOVID) %>%
+  gather(., QCOVID, number.people, c("Patient.Count.QCOVID","Patient.Count.nonQCOVID"), factor_key=FALSE) %>%
+  mutate(.,QCOVID=ifelse(QCOVID=="Patient.Count.QCOVID","QCOVID",QCOVID),
+           QCOVID=ifelse(QCOVID=="Patient.Count.nonQCOVID","National methodology",QCOVID)) %>%
+  mutate(.,Extract.Date=lubridate::dmy(Extract.Date)) %>%
+  mutate(., QCOVID = factor(QCOVID, levels=c("QCOVID",
+                                           "National methodology")))
+
+QCOVID_numbers_chart <- QCOVID_numbers_data %>%
+  ggplot(., aes(fill=QCOVID, y=number.people, x=Extract.Date)) + 
+  geom_bar(position="stack", stat="identity") +
+  theme_ipsum() +
+  guides(fill=guide_legend(title="Addition method")) +
+  scale_y_continuous(labels = scales::comma) +
+  scale_x_date(date_labels = "%b %d %Y", breaks = unique(QCOVID_numbers_data$Extract.Date)) +
+  labs(title="Number of people identified as CEV in England",
+       x ="Extract date", y = "Number of people") +
+  theme(panel.border = element_blank(),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        panel.background = element_blank(),
+        axis.ticks.x=element_blank(),
+        legend.text=element_text(size=11),
+        text = element_text(size = 11),
+        axis.text = element_text(size =11),
+        axis.text.x = element_text(angle = 45, hjust = 1),
+        axis.title.y = element_text(size =11),
+        axis.title.x = element_text(margin = unit(c(3, 0, 0, 0), "mm")))
+
+ggplotly(QCOVID_numbers_chart) %>%
+  layout(title = list(text = paste0('Number of people identified as CEV in England',
+                                    '<br>',
+                                    '<sup>',
+                                    'Data from NHS Digital between 26 Feb 21 and 20 March 21',
+                                    '</sup>')))
+
+```
+
+## Changes by deprivation
+
+### Local-authority level
+
+At first sight, it appears that that more deprived local authorities saw the highest increase in the share of CEV people.
+
+```{r dep0, echo=FALSE, message=FALSE, warning=FALSE,fig.width=9,fig.height=7}
+
+change_pct_points_by_dep_data <- before_after_data %>%
+  select(.,LA.Code,LA.Name,quintile_income,Shielders_pct_diff) %>%
+  filter(.,!(is.na(Shielders_pct_diff)|is.na(quintile_income))) %>%
+  arrange(.,desc(Shielders_pct_diff))
+
+change_pct_points_by_dep <- change_pct_points_by_dep_data %>%
+  ggplot(.) +
+  geom_col(aes(x=reorder(LA.Name, Shielders_pct_diff), y = Shielders_pct_diff,fill = factor(quintile_income))) +
+  ylim(0, 8) +
+  scale_fill_brewer(palette="Spectral",name = "IMD income\nquintile",direction = 1) +
+  theme(panel.border = element_blank(),
+        panel.grid.major = element_blank(),panel.grid.minor = element_blank(),
+        axis.text.x=element_blank(),axis.ticks.x=element_blank(),
+        panel.background = element_blank(),
+        plot.margin = unit(c(1,2,1,1), "cm")) +
+  labs(title="Change in rate of CEV people after QCOVID",y = "Change in % points",x="Local authority")
+
+m <- list(   l = 80,   r = 300,   b = 80,   t = 120,   pad = 0 )
+
+ggplotly(change_pct_points_by_dep) %>%
+  layout(autosize = F, width = 900, height = 700, margin = m,
+         title = list(text = paste0('Change in rate of CEV people after QCOVID',
+                                    '<br>',
+                                    '<sup>',
+                                    'NHS Digital (England), "before" data from 10 Feb 2021 and "after" data from 20 Mar 2021',
+                                    '</sup>')))
+
+```
+
+### Local-authority level, by deprivation and starting point
+
+Local authorities that already had a high share of CEV people saw smaller increases in the share of their population asked to shield (e.g. Liverpool, where almost 9% of people were on the SPL and this only increased by 1.5 percentage points after QCOVID). This trend, however, was most apparent in the most income-deprived local authorities — and these had the largest amount of variation in the starting point (% shielding before QCOVID). In other words, before QCOVID was applied, more affluent local authorities were more alike in terms of % who were CEV.
+
+```{r dep1, echo=FALSE, message=FALSE, warning=FALSE,fig.width=9,fig.height=7}
+
+scatter_data <- before_after_data %>%
+  select(.,LA.Code,LA.Name,quintile_income,Shielders_pct_before,Shielders_pct_after,Shielders_pct_diff) %>%
+  filter(.,!(is.na(Shielders_pct_diff)|is.na(quintile_income))) %>%
+  arrange(.,desc(Shielders_pct_diff)) %>%
+  mutate(., quintile_income=ifelse(quintile_income=="1","1 (most deprived)",quintile_income)) %>%
+  mutate(., quintile_income=ifelse(quintile_income=="5","5 (least deprived)",quintile_income)) %>%
+  mutate(., quintile_income = factor(quintile_income, levels=c("1 (most deprived)","2","3","4","5 (least deprived)")))
+
+scatter_chart <- scatter_data %>%
+  ggplot(.,aes(x=Shielders_pct_before, y = Shielders_pct_diff, label=LA.Name)) +
+  geom_point(aes(fill=factor(quintile_income)),colour="darkgrey",pch=21, size=2) +
+  geom_smooth(method='lm',se=FALSE,col="black",linetype="dashed") +
+  ylim(0, 8) +
+  facet_wrap(~ quintile_income) +
+  scale_fill_brewer(palette="Spectral",name = "IMD income\nquintile",direction = 1) +
+  theme(panel.border = element_blank(),
+        panel.background = element_blank(),
+        plot.margin = unit(c(1,2,1,1), "cm")) +
+  labs(title="Change in rate of CEV people after QCOVID",y = "Change in % points",x="% CEV before QCOVID")
+
+m <- list(   l = 80,   r = 300,   b = 80,   t = 120,   pad = 0 )
+
+ggplotly(scatter_chart) %>%
+  layout(autosize = F, width = 900, height = 700, margin = m,
+         title = list(text = paste0('Change in rate of CEV people after QCOVID',
+                                    '<br>',
+                                    '<sup>',
+                                    'NHS Digital (England), "before" data from 10 Feb 2021 and "after" data from 20 Mar 2021',
+                                    '</sup>')))
+
+```
+
+### Aggregated by IMD income quintile
+
+```{r dep2, echo=FALSE, message=FALSE, warning=FALSE,fig.width=9,fig.height=7}
+
+agg_by_dep_data <- before_after_data_long %>%
+  filter(.,!is.na(quintile_income)) %>%
+  select(.,before_after,quintile_income,LA.Code,LA.Name,Patient.Count,pop19) %>%
+  group_by(before_after,quintile_income) %>%
+  summarise(Patient.Count=sum(Patient.Count,na.rm=TRUE),
+            pop19=sum(pop19,na.rm=TRUE)) %>%
+  ungroup() %>%
+  mutate(.,pct_shielding=Patient.Count/pop19*100) %>%
+  arrange(.,quintile_income,before_after) %>%
+  mutate(., quintile_income=ifelse(quintile_income=="1","1 (most deprived)",quintile_income)) %>%
+  mutate(., quintile_income=ifelse(quintile_income=="5","5 (least deprived)",quintile_income)) %>%
+  mutate(., quintile_income = factor(quintile_income, levels=c("1 (most deprived)","2","3","4","5 (least deprived)")))
+
+agg_by_dep_data_chart <- agg_by_dep_data %>%
+  ggplot(.,aes(fill=before_after,x = quintile_income,y = pct_shielding)) +
+  geom_bar(position="dodge", stat="identity") +
+  scale_y_continuous(name="% of people who are CEV",limits=c(0,10)) +
+  theme_ipsum() +
+  scale_fill_brewer(palette = "Set1") +
+  guides(fill=guide_legend(title="Before/after QCOVID")) +
+  labs(title="Impact of QCOVID on shielding rates by deprivation",
+       x ="IMD income quintile", y = "% of CEV people")  +
+  theme(panel.border = element_blank(),
+        panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        panel.background = element_blank(),
+        axis.ticks.x=element_blank(),
+        legend.text=element_text(size=11),
+        text = element_text(size = 11),
+        axis.text = element_text(size =11),
+        axis.text.x = element_text(angle = 45, hjust = 1),
+        axis.title.y = element_text(size =11),
+        axis.title.x = element_text(margin = unit(c(3, 0, 0, 0), "mm")))
+
+m <- list(   l = 80,   r = 300,   b = 80,   t = 120,   pad = 0 )
+
+ggplotly(agg_by_dep_data_chart) %>%
+  layout(autosize = F, width = 900, height = 700, margin = m,
+         title = list(text = paste0('Impact of QCOVID on shielding rates by deprivation',
+                                    '<br>',
+                                    '<sup>',
+                                    'NHS Digital (England), "before" data from 10 Feb 2021 and "after" data from 20 Mar 2021',
+                                    '</sup>')))
+
+```
+
+## Changes by region
+
+After QCOVID, London overtook the North West as the region with the highest proportion of people asked to shield. Some of the highest increases in % CEV after QCOVID happened in more income-deprived London boroughs (such as Newham, Tower Hamlets and Southwark). 
+
+```{r reg1, echo=FALSE, message=FALSE, warning=FALSE,fig.width=9,fig.height=7}
+
+agg_by_region_data <- before_after_data_long %>%
+  filter(.,!(is.na(RGN19NM)|RGN19NM=="")) %>%
+  select(.,before_after,RGN19NM,LA.Code,LA.Name,Patient.Count,pop19) %>%
+  group_by(before_after,RGN19NM) %>%
+  summarise(Patient.Count=sum(Patient.Count,na.rm=TRUE),
+            pop19=sum(pop19,na.rm=TRUE)) %>%
+  ungroup() %>%
+  mutate(.,pct_shielding=Patient.Count/pop19*100) %>%
+  arrange(.,RGN19NM,before_after)
+
+after_data  <- agg_by_region_data %>%
+  filter(.,before_after=="after") %>%
+  arrange(.,pct_shielding) %>%
+  mutate(.,order=1:nrow(.)) %>%
+  select(.,RGN19NM,order)
+
+agg_by_region_data <- left_join(agg_by_region_data,after_data,by="RGN19NM")
+
+agg_by_region_data_chart <- agg_by_region_data %>%
+  ggplot(.,aes(fill=before_after,x = reorder(RGN19NM,order),y = pct_shielding)) +
+  geom_bar(position="dodge", stat="identity") +
+  scale_y_continuous(name="% of people who are CEV",limits=c(0,10)) +
+  theme_ipsum() +
+  scale_fill_brewer(palette = "Set1") +
+  guides(fill=guide_legend(title="Before/after QCOVID")) +
+  labs(title="Impact of QCOVID on shielding rates by region",
+       x ="Region", y = "% of CEV people")  +
+  theme(panel.border = element_blank(),
+        panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        panel.background = element_blank(),
+        axis.ticks.x=element_blank(),
+        legend.text=element_text(size=11),
+        text = element_text(size = 11),
+        axis.text = element_text(size =11),
+        axis.text.x = element_text(angle = 45, hjust = 1),
+        axis.title.y = element_text(size =11),
+        axis.title.x = element_text(margin = unit(c(3, 0, 0, 0), "mm")))
+
+m <- list(   l = 80,   r = 300,   b = 80,   t = 120,   pad = 0 )
+
+ggplotly(agg_by_region_data_chart) %>%
+  layout(autosize = F, width = 900, height = 700, margin = m,
+         title = list(text = paste0('Impact of QCOVID on shielding rates by region',
+                                    '<br>',
+                                    '<sup>',
+                                    'NHS Digital (England), "before" data from 10 Feb 2021 and "after" data from 20 Mar 2021',
+                                    '</sup>')))
+
+```
