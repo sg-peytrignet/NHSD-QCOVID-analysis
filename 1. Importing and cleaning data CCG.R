@@ -28,7 +28,24 @@ gitdir <- dirname(rstudioapi::getSourceEditorContext()$path)
 ################### POPULATION ###############
 ##############################################
 
-pop_by_CCG <- fread(paste0(rawdatadir,"Other data/Mid-year population estimates/CCG/pop_by_LSOA_agg.csv"), header=TRUE, sep=",", check.names=T)
+#CCGs in England
+
+pop_by_CCG <- read_excel("M:/Analytics/Networked Data Lab/Shielding/Other data/Mid-year population estimates/CCG/sape22dt6amid2019ccg2020estimatesunformatted/SAPE22DT6a-mid-2019-ccg-2020-estimates-unformatted.xlsx",
+                         sheet="Mid-2019 Persons",skip=6) %>%
+  select(.,`CCG Code`,`CCG Name`,`STP20 Code`,`STP20 Name`,`All Ages`) %>%
+  filter(.,!is.na(`CCG Code`)) %>%
+  rename(.,pop19=`All Ages`)
+
+#Scottish Health Boards
+#Grampian
+#Other source: https://www.srr.scot.nhs.uk/publications/docs/2020-10-13-SRR-Report.pdf?4
+
+pop_by_SHB <- fread("M:/Analytics/Networked Data Lab/Shielding/Other data/Mid-year population estimates/Scotland/population-estimates-2011-datazone-linked-dataset.csv", header=TRUE, sep=",", check.names=T,skip=8)
+
+#Wales
+#Other source: https://www.ons.gov.uk/peoplepopulationandcommunity/populationandmigration/populationestimates/bulletins/annualmidyearpopulationestimates/mid2019estimates
+
+pop_Wales <- 3152879
 
 ##############################################
 ################### DEPRIVATION ##############

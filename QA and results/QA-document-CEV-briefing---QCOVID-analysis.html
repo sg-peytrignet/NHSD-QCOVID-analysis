@@ -457,9 +457,8 @@ code span.ot { color: #007020; }
 <span id="cb1-12"><a href="#cb1-12"></a></span>
 <span id="cb1-13"><a href="#cb1-13"></a><span class="co">#Set directory where inputs are saved</span></span>
 <span id="cb1-14"><a href="#cb1-14"></a>rawdatadir &lt;-<span class="st"> &quot;M:/Analytics/Networked Data Lab/Shielding/&quot;</span></span>
-<span id="cb1-15"><a href="#cb1-15"></a></span>
-<span id="cb1-16"><a href="#cb1-16"></a><span class="co">#Git directory</span></span>
-<span id="cb1-17"><a href="#cb1-17"></a>gitdir &lt;-<span class="st"> &quot;M:/Analytics/Sebastien/GitHub/NHSD-QCOVID-analysis/&quot;</span></span></code></pre></div>
+<span id="cb1-15"><a href="#cb1-15"></a>briefonedrivedir &lt;-<span class="st"> &quot;C:/Users/SebastienP/OneDrive - The Health Foundation/Briefing chart data/&quot;</span></span>
+<span id="cb1-16"><a href="#cb1-16"></a>gitdir &lt;-<span class="st"> &quot;M:/Analytics/Sebastien/GitHub/NHSD-QCOVID-analysis/&quot;</span></span></code></pre></div>
 </div>
 <div id="create-new-look-up-imd-scores-at-the-ccg-level-using-imd-scores-at-the-lsoa-level-and-using-population-to-aggregate-upwards" class="section level2">
 <h2>Create new look-up: IMD scores at the CCG level using IMD scores at the LSOA level and using population to aggregate upwards</h2>
@@ -660,8 +659,8 @@ code span.ot { color: #007020; }
 <div id="descriptive-statistics-used-in-final-document" class="section level2">
 <h2>Descriptive statistics used in final document</h2>
 </div>
-<div id="people-in-england-asked-to-shield-beforeafter-qcovid" class="section level1">
-<h1>People in England asked to shield before/after QCOVID</h1>
+<div id="people-in-england-asked-to-shield-beforeafter-qcovid" class="section level2">
+<h2>People in England asked to shield before/after QCOVID</h2>
 <div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1"></a><span class="kw">fread_folder</span>(<span class="kw">paste0</span>(gitdir,<span class="st">&quot;/Clean data/&quot;</span>), <span class="dt">extension =</span> <span class="st">&quot;CSV&quot;</span>)</span>
 <span id="cb5-2"><a href="#cb5-2"></a></span>
 <span id="cb5-3"><a href="#cb5-3"></a>CCG_before_after_data <span class="op">%&gt;%</span></span>
@@ -697,15 +696,22 @@ ENGLAND
 </tr>
 </tbody>
 </table>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1"></a>data.QCOVID.chart &lt;-<span class="st"> </span>CCG_before_after_data_long <span class="op">%&gt;%</span></span>
+<span id="cb6-2"><a href="#cb6-2"></a><span class="st">  </span><span class="kw">select</span>(.,CCG.Name,before_after,Shielders_pct,IMD19_quintile) <span class="op">%&gt;%</span></span>
+<span id="cb6-3"><a href="#cb6-3"></a><span class="st">  </span><span class="kw">filter</span>(.,(<span class="op">!</span><span class="kw">is.na</span>(Shielders_pct))<span class="op">&amp;</span>(<span class="op">!</span><span class="kw">is.na</span>(IMD19_quintile))) <span class="op">%&gt;%</span></span>
+<span id="cb6-4"><a href="#cb6-4"></a><span class="st">  </span><span class="kw">mutate</span>(., <span class="dt">IMD19_quintile=</span><span class="kw">ifelse</span>(IMD19_quintile<span class="op">==</span><span class="st">&quot;1&quot;</span>,<span class="st">&quot;1 (most deprived)&quot;</span>,IMD19_quintile)) <span class="op">%&gt;%</span></span>
+<span id="cb6-5"><a href="#cb6-5"></a><span class="st">  </span><span class="kw">mutate</span>(., <span class="dt">IMD19_quintile=</span><span class="kw">ifelse</span>(IMD19_quintile<span class="op">==</span><span class="st">&quot;5&quot;</span>,<span class="st">&quot;5 (least deprived)&quot;</span>,IMD19_quintile)) <span class="op">%&gt;%</span></span>
+<span id="cb6-6"><a href="#cb6-6"></a><span class="st">  </span><span class="kw">arrange</span>(.,CCG.Name,before_after)</span>
+<span id="cb6-7"><a href="#cb6-7"></a><span class="kw">fwrite</span>(data.QCOVID.chart, <span class="dt">file =</span> <span class="kw">paste0</span>(briefonedrivedir,<span class="st">&quot;data.QCOVID.chart.csv&quot;</span>), <span class="dt">sep =</span> <span class="st">&quot;,&quot;</span>)</span></code></pre></div>
 </div>
-<div id="ccgs-with-mostleast-people-shielding-and-those-with-highest-change-attributed-to-qcovid" class="section level1">
-<h1>CCGs with most/least people shielding and those with highest change attributed to QCOVID</h1>
-<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1"></a><span class="co">#CCGS with highest % shielding after QCOVID</span></span>
-<span id="cb6-2"><a href="#cb6-2"></a>CCG_before_after_data <span class="op">%&gt;%</span></span>
-<span id="cb6-3"><a href="#cb6-3"></a><span class="st">  </span><span class="kw">slice_max</span>(.,Shielders_from_QCOVID_pct_after,<span class="dt">n=</span><span class="dv">5</span>) <span class="op">%&gt;%</span></span>
-<span id="cb6-4"><a href="#cb6-4"></a><span class="st">  </span><span class="kw">select</span>(.,CCG.Name,Shielders_pct_before,Shielders_pct_after,Shielders_from_QCOVID_pct_after) <span class="op">%&gt;%</span></span>
-<span id="cb6-5"><a href="#cb6-5"></a><span class="st">  </span><span class="kw">kable</span>(.,<span class="dt">digits=</span><span class="dv">1</span>,<span class="dt">format.args =</span> <span class="kw">list</span>(<span class="dt">big.mark =</span> <span class="st">&quot;,&quot;</span>)) <span class="op">%&gt;%</span></span>
-<span id="cb6-6"><a href="#cb6-6"></a><span class="st">  </span><span class="kw">kable_styling</span>()</span></code></pre></div>
+<div id="ccgs-with-mostleast-people-shielding-and-those-with-highest-change-attributed-to-qcovid" class="section level2">
+<h2>CCGs with most/least people shielding and those with highest change attributed to QCOVID</h2>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1"></a><span class="co">#CCGS with highest % shielding after QCOVID</span></span>
+<span id="cb7-2"><a href="#cb7-2"></a>CCG_before_after_data <span class="op">%&gt;%</span></span>
+<span id="cb7-3"><a href="#cb7-3"></a><span class="st">  </span><span class="kw">slice_max</span>(.,Shielders_from_QCOVID_pct_after,<span class="dt">n=</span><span class="dv">5</span>) <span class="op">%&gt;%</span></span>
+<span id="cb7-4"><a href="#cb7-4"></a><span class="st">  </span><span class="kw">select</span>(.,CCG.Name,Shielders_pct_before,Shielders_pct_after,Shielders_from_QCOVID_pct_after) <span class="op">%&gt;%</span></span>
+<span id="cb7-5"><a href="#cb7-5"></a><span class="st">  </span><span class="kw">kable</span>(.,<span class="dt">digits=</span><span class="dv">1</span>,<span class="dt">format.args =</span> <span class="kw">list</span>(<span class="dt">big.mark =</span> <span class="st">&quot;,&quot;</span>)) <span class="op">%&gt;%</span></span>
+<span id="cb7-6"><a href="#cb7-6"></a><span class="st">  </span><span class="kw">kable_styling</span>()</span></code></pre></div>
 <table class="table" style="margin-left: auto; margin-right: auto;">
 <thead>
 <tr>
@@ -796,12 +802,12 @@ NHS Sandwell and West Birmingham CCG
 </tr>
 </tbody>
 </table>
-<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1"></a><span class="co">#CCGS with lowest % shielding after QCOVID</span></span>
-<span id="cb7-2"><a href="#cb7-2"></a>CCG_before_after_data <span class="op">%&gt;%</span></span>
-<span id="cb7-3"><a href="#cb7-3"></a><span class="st">  </span><span class="kw">slice_min</span>(.,Shielders_from_QCOVID_pct_after,<span class="dt">n=</span><span class="dv">5</span>) <span class="op">%&gt;%</span></span>
-<span id="cb7-4"><a href="#cb7-4"></a><span class="st">  </span><span class="kw">select</span>(.,CCG.Name,Shielders_pct_before,Shielders_pct_after,Shielders_from_QCOVID_pct_after) <span class="op">%&gt;%</span></span>
-<span id="cb7-5"><a href="#cb7-5"></a><span class="st">  </span><span class="kw">kable</span>(.,<span class="dt">digits=</span><span class="dv">1</span>,<span class="dt">format.args =</span> <span class="kw">list</span>(<span class="dt">big.mark =</span> <span class="st">&quot;,&quot;</span>)) <span class="op">%&gt;%</span></span>
-<span id="cb7-6"><a href="#cb7-6"></a><span class="st">  </span><span class="kw">kable_styling</span>()</span></code></pre></div>
+<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1"></a><span class="co">#CCGS with lowest % shielding after QCOVID</span></span>
+<span id="cb8-2"><a href="#cb8-2"></a>CCG_before_after_data <span class="op">%&gt;%</span></span>
+<span id="cb8-3"><a href="#cb8-3"></a><span class="st">  </span><span class="kw">slice_min</span>(.,Shielders_from_QCOVID_pct_after,<span class="dt">n=</span><span class="dv">5</span>) <span class="op">%&gt;%</span></span>
+<span id="cb8-4"><a href="#cb8-4"></a><span class="st">  </span><span class="kw">select</span>(.,CCG.Name,Shielders_pct_before,Shielders_pct_after,Shielders_from_QCOVID_pct_after) <span class="op">%&gt;%</span></span>
+<span id="cb8-5"><a href="#cb8-5"></a><span class="st">  </span><span class="kw">kable</span>(.,<span class="dt">digits=</span><span class="dv">1</span>,<span class="dt">format.args =</span> <span class="kw">list</span>(<span class="dt">big.mark =</span> <span class="st">&quot;,&quot;</span>)) <span class="op">%&gt;%</span></span>
+<span id="cb8-6"><a href="#cb8-6"></a><span class="st">  </span><span class="kw">kable_styling</span>()</span></code></pre></div>
 <table class="table" style="margin-left: auto; margin-right: auto;">
 <thead>
 <tr>
@@ -892,12 +898,12 @@ NHS Northumberland CCG
 </tr>
 </tbody>
 </table>
-<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1"></a><span class="co">#CCGS with highest change in % shielding after QCOVID</span></span>
-<span id="cb8-2"><a href="#cb8-2"></a>CCG_before_after_data <span class="op">%&gt;%</span></span>
-<span id="cb8-3"><a href="#cb8-3"></a><span class="st">  </span><span class="kw">slice_max</span>(.,Shielders_pct_diff,<span class="dt">n=</span><span class="dv">5</span>)  <span class="op">%&gt;%</span></span>
-<span id="cb8-4"><a href="#cb8-4"></a><span class="st">  </span><span class="kw">select</span>(.,CCG.Name,Shielders_pct_diff) <span class="op">%&gt;%</span></span>
-<span id="cb8-5"><a href="#cb8-5"></a><span class="st">  </span><span class="kw">kable</span>(.,<span class="dt">digits=</span><span class="dv">1</span>,<span class="dt">format.args =</span> <span class="kw">list</span>(<span class="dt">big.mark =</span> <span class="st">&quot;,&quot;</span>)) <span class="op">%&gt;%</span></span>
-<span id="cb8-6"><a href="#cb8-6"></a><span class="st">  </span><span class="kw">kable_styling</span>()</span></code></pre></div>
+<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1"></a><span class="co">#CCGS with highest change in % shielding after QCOVID</span></span>
+<span id="cb9-2"><a href="#cb9-2"></a>CCG_before_after_data <span class="op">%&gt;%</span></span>
+<span id="cb9-3"><a href="#cb9-3"></a><span class="st">  </span><span class="kw">slice_max</span>(.,Shielders_pct_diff,<span class="dt">n=</span><span class="dv">5</span>)  <span class="op">%&gt;%</span></span>
+<span id="cb9-4"><a href="#cb9-4"></a><span class="st">  </span><span class="kw">select</span>(.,CCG.Name,Shielders_pct_diff) <span class="op">%&gt;%</span></span>
+<span id="cb9-5"><a href="#cb9-5"></a><span class="st">  </span><span class="kw">kable</span>(.,<span class="dt">digits=</span><span class="dv">1</span>,<span class="dt">format.args =</span> <span class="kw">list</span>(<span class="dt">big.mark =</span> <span class="st">&quot;,&quot;</span>)) <span class="op">%&gt;%</span></span>
+<span id="cb9-6"><a href="#cb9-6"></a><span class="st">  </span><span class="kw">kable_styling</span>()</span></code></pre></div>
 <table class="table" style="margin-left: auto; margin-right: auto;">
 <thead>
 <tr>
@@ -953,20 +959,20 @@ NHS Ealing CCG
 </tbody>
 </table>
 </div>
-<div id="aggregated-shielding-and-std.-dev.-of-shielding-by-imd-quintile" class="section level1">
-<h1>Aggregated % shielding and std. dev. of % shielding by IMD quintile</h1>
-<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1"></a>SPL_by_CCG_All <span class="op">%&gt;%</span></span>
-<span id="cb9-2"><a href="#cb9-2"></a><span class="st">  </span><span class="kw">filter</span>(.,(Extract.Date <span class="op">%in%</span><span class="st"> </span><span class="kw">c</span>(<span class="st">&quot;10/02/2021&quot;</span>,<span class="st">&quot;20/03/2021&quot;</span>)),CCG.Name<span class="op">!=</span><span class="st">&quot;ENGLAND&quot;</span>) <span class="op">%&gt;%</span></span>
-<span id="cb9-3"><a href="#cb9-3"></a><span class="st">  </span><span class="kw">select</span>(.,Extract.Date,CCG.Name,Patient.Count,Shielders_pct,pop19,IMD19_quintile) <span class="op">%&gt;%</span></span>
-<span id="cb9-4"><a href="#cb9-4"></a><span class="st">  </span><span class="kw">group_by</span>(Extract.Date,IMD19_quintile) <span class="op">%&gt;%</span></span>
-<span id="cb9-5"><a href="#cb9-5"></a><span class="st">  </span><span class="kw">summarise</span>(.,<span class="dt">pop19=</span><span class="kw">sum</span>(pop19,<span class="dt">na.rm=</span><span class="ot">TRUE</span>),</span>
-<span id="cb9-6"><a href="#cb9-6"></a>            <span class="dt">Patient.Count=</span><span class="kw">sum</span>(Patient.Count,<span class="dt">na.rm=</span><span class="ot">TRUE</span>),</span>
-<span id="cb9-7"><a href="#cb9-7"></a>            <span class="dt">std.dev.pct.shielding=</span><span class="kw">sd</span>(Shielders_pct)) <span class="op">%&gt;%</span></span>
-<span id="cb9-8"><a href="#cb9-8"></a><span class="st">  </span><span class="kw">mutate</span>(.,<span class="dt">Shielders_pct_agg=</span>Patient.Count<span class="op">/</span>pop19<span class="op">*</span><span class="dv">100</span>) <span class="op">%&gt;%</span></span>
-<span id="cb9-9"><a href="#cb9-9"></a><span class="st">  </span><span class="kw">ungroup</span>() <span class="op">%&gt;%</span></span>
-<span id="cb9-10"><a href="#cb9-10"></a><span class="st">  </span><span class="kw">arrange</span>(.,IMD19_quintile,Extract.Date) <span class="op">%&gt;%</span></span>
-<span id="cb9-11"><a href="#cb9-11"></a><span class="st">  </span><span class="kw">kable</span>(.,<span class="dt">digits=</span><span class="dv">1</span>,<span class="dt">format.args =</span> <span class="kw">list</span>(<span class="dt">big.mark =</span> <span class="st">&quot;,&quot;</span>)) <span class="op">%&gt;%</span></span>
-<span id="cb9-12"><a href="#cb9-12"></a><span class="st">  </span><span class="kw">kable_styling</span>()</span></code></pre></div>
+<div id="aggregated-shielding-and-std.-dev.-of-shielding-by-imd-quintile" class="section level2">
+<h2>Aggregated % shielding and std. dev. of % shielding by IMD quintile</h2>
+<div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1"></a>SPL_by_CCG_All <span class="op">%&gt;%</span></span>
+<span id="cb10-2"><a href="#cb10-2"></a><span class="st">  </span><span class="kw">filter</span>(.,(Extract.Date <span class="op">%in%</span><span class="st"> </span><span class="kw">c</span>(<span class="st">&quot;10/02/2021&quot;</span>,<span class="st">&quot;20/03/2021&quot;</span>)),CCG.Name<span class="op">!=</span><span class="st">&quot;ENGLAND&quot;</span>) <span class="op">%&gt;%</span></span>
+<span id="cb10-3"><a href="#cb10-3"></a><span class="st">  </span><span class="kw">select</span>(.,Extract.Date,CCG.Name,Patient.Count,Shielders_pct,pop19,IMD19_quintile) <span class="op">%&gt;%</span></span>
+<span id="cb10-4"><a href="#cb10-4"></a><span class="st">  </span><span class="kw">group_by</span>(Extract.Date,IMD19_quintile) <span class="op">%&gt;%</span></span>
+<span id="cb10-5"><a href="#cb10-5"></a><span class="st">  </span><span class="kw">summarise</span>(.,<span class="dt">pop19=</span><span class="kw">sum</span>(pop19,<span class="dt">na.rm=</span><span class="ot">TRUE</span>),</span>
+<span id="cb10-6"><a href="#cb10-6"></a>            <span class="dt">Patient.Count=</span><span class="kw">sum</span>(Patient.Count,<span class="dt">na.rm=</span><span class="ot">TRUE</span>),</span>
+<span id="cb10-7"><a href="#cb10-7"></a>            <span class="dt">std.dev.pct.shielding=</span><span class="kw">sd</span>(Shielders_pct)) <span class="op">%&gt;%</span></span>
+<span id="cb10-8"><a href="#cb10-8"></a><span class="st">  </span><span class="kw">mutate</span>(.,<span class="dt">Shielders_pct_agg=</span>Patient.Count<span class="op">/</span>pop19<span class="op">*</span><span class="dv">100</span>) <span class="op">%&gt;%</span></span>
+<span id="cb10-9"><a href="#cb10-9"></a><span class="st">  </span><span class="kw">ungroup</span>() <span class="op">%&gt;%</span></span>
+<span id="cb10-10"><a href="#cb10-10"></a><span class="st">  </span><span class="kw">arrange</span>(.,IMD19_quintile,Extract.Date) <span class="op">%&gt;%</span></span>
+<span id="cb10-11"><a href="#cb10-11"></a><span class="st">  </span><span class="kw">kable</span>(.,<span class="dt">digits=</span><span class="dv">1</span>,<span class="dt">format.args =</span> <span class="kw">list</span>(<span class="dt">big.mark =</span> <span class="st">&quot;,&quot;</span>)) <span class="op">%&gt;%</span></span>
+<span id="cb10-12"><a href="#cb10-12"></a><span class="st">  </span><span class="kw">kable_styling</span>()</span></code></pre></div>
 <table class="table" style="margin-left: auto; margin-right: auto;">
 <thead>
 <tr>

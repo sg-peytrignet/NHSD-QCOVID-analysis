@@ -30,8 +30,7 @@ rm(list = ls())
 
 #Set directory where inputs are saved
 rawdatadir <- "M:/Analytics/Networked Data Lab/Shielding/"
-
-#Git directory
+briefonedrivedir <- "C:/Users/SebastienP/OneDrive - The Health Foundation/Briefing chart data/"
 gitdir <- "M:/Analytics/Sebastien/GitHub/NHSD-QCOVID-analysis/"
 
 ```
@@ -240,7 +239,7 @@ fwrite(before_after_data, file = here::here("Clean data","CCG_before_after_data.
 
 ## Descriptive statistics used in final document
 
-# People in England asked to shield before/after QCOVID
+## People in England asked to shield before/after QCOVID
 
 ```{r CCG.desc.stats.0, eval=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
 fread_folder(paste0(gitdir,"/Clean data/"), extension = "CSV")
@@ -250,9 +249,17 @@ CCG_before_after_data %>%
   select(.,CCG.Name,Shielders_pct_before,Shielders_pct_after) %>%
   kable(.,digits=1,format.args = list(big.mark = ",")) %>%
   kable_styling()
+
+data.QCOVID.chart <- CCG_before_after_data_long %>%
+  select(.,CCG.Name,before_after,Shielders_pct,IMD19_quintile) %>%
+  filter(.,(!is.na(Shielders_pct))&(!is.na(IMD19_quintile))) %>%
+  mutate(., IMD19_quintile=ifelse(IMD19_quintile=="1","1 (most deprived)",IMD19_quintile)) %>%
+  mutate(., IMD19_quintile=ifelse(IMD19_quintile=="5","5 (least deprived)",IMD19_quintile)) %>%
+  arrange(.,CCG.Name,before_after)
+fwrite(data.QCOVID.chart, file = paste0(briefonedrivedir,"data.QCOVID.chart.csv"), sep = ",")
 ```
 
-# CCGs with most/least people shielding and those with highest change attributed to QCOVID
+## CCGs with most/least people shielding and those with highest change attributed to QCOVID
 
 ```{r CCG.desc.stats.1, eval=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
 #CCGS with highest % shielding after QCOVID
@@ -277,7 +284,7 @@ CCG_before_after_data %>%
   kable_styling()
 ```
 
-# Aggregated % shielding and std. dev. of % shielding by IMD quintile
+## Aggregated % shielding and std. dev. of % shielding by IMD quintile
 
 ```{r CCG.desc.stats.2, eval=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
 SPL_by_CCG_All %>%
