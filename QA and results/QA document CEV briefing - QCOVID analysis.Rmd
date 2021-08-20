@@ -37,7 +37,7 @@ gitdir <- "M:/Analytics/Sebastien/GitHub/NHSD-QCOVID-analysis/"
 
 ## Create new look-up: IMD scores at the CCG level using IMD scores at the LSOA level and using population to aggregate upwards
 
-```{r new.CCG.measures, eval=FALSE, echo=TRUE, message=FALSE, warning=FALSE}
+```{r new.CCG.measures, eval=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
 #######################################################################
 ################### LOOKUP: LOCAL AUTHORITY TO HIGHER #################
 #######################################################################
@@ -171,7 +171,7 @@ fwrite(SPL_by_CCG, file = here::here("Clean data","SPL_by_CCG.csv"), sep = ",")
 
 ## Clean merged data
 
-```{r CCG.cleaning, eval=FALSE, echo=TRUE, message=FALSE, warning=FALSE}
+```{r CCG.cleaning, eval=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
 ############ Reduced dataset for all shielders
 
 SPL_by_CCG_All <- dplyr::filter(SPL_by_CCG,Breakdown.Field=="ALL")
@@ -309,4 +309,30 @@ SPL_by_CCG_All %>%
   kable_styling()
 ```
 
+## Chart for data
 
+```{r CCG.desc.stats.3, eval=FALSE, echo=TRUE, message=FALSE, warning=FALSE}
+chart.data <- SPL_by_CCG_All %>%
+  filter(.,(Extract.Date %in% c("10/02/2021","20/03/2021")),CCG.Name!="ENGLAND") %>%
+  select(.,Extract.Date,CCG.Name,Shielders_pct,IMD19_quintile) %>%
+  rename(.,CCG=CCG.Name,
+         `% identifed as clinically extremely vulnerable`=Shielders_pct,
+         Timing=Extract.Date) %>%
+  arrange(IMD19_quintile,Timing) %>% 
+  mutate(.,IMD19_quintile=ifelse(IMD19_quintile==1,"1 (most deprived)",IMD19_quintile),
+         IMD19_quintile=ifelse(IMD19_quintile==5,"5 (least deprived)",IMD19_quintile)) %>%
+  mutate(.,Timing=ifelse(Timing=="10/02/2021","Before QCOVID","After QCOVID"),
+         CCG=str_replace_all(CCG,"NHS ",""),
+         CCG=str_replace_all(CCG," CCG","")) %>%
+  select(CCG,Timing,`% identifed as clinically extremely vulnerable`,IMD19_quintile)
+
+order <- filter(chart.data,Timing=="After QCOVID") %>%
+  arrange(IMD19_quintile,-`% identifed as clinically extremely vulnerable`) %>%
+  select(.,CCG) %>%
+  mutate(order=1:n())
+
+chart.data <- left_join(chart.data,order,by="CCG") %>%
+  arrange(order)
+  
+fwrite(chart.data, file = paste0(briefonedrivedir,"dumbell_by_ccg_dep.csv"), sep = ",")
+```
