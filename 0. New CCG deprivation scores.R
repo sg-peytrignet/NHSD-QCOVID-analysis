@@ -63,8 +63,15 @@ pop_by_LSOA_agg <- pop_by_LSOA %>%
 ################### DEPRIVATION ##############
 ##############################################
 
-IMD2019_LSOA <- fread(paste0(rawdatadir,"Other data/IMD/LSOA/Index_of_Multiple_Deprivation_(December_2019)_Lookup_in_England.csv"), header=TRUE, sep=",", check.names=T) %>%
-  select(.,LSOA11CD,IMD19)
+# IMD2019_LSOA <- fread(paste0(rawdatadir,"Other data/IMD/LSOA/Index_of_Multiple_Deprivation_(December_2019)_Lookup_in_England.csv"), header=TRUE, sep=",", check.names=T) %>%
+#   select(.,LSOA11CD,IMD19)
+
+IMD2019_LSOA <- fread(paste0(rawdatadir,"Other data/IMD/LSOA/File_7_-_All_IoD2019_Scores__Ranks__Deciles_and_Population_Denominators_3.csv"),
+                           header=TRUE, sep=",", check.names=T) %>%
+  select(.,LSOA.code..2011.,
+         Index.of.Multiple.Deprivation..IMD..Score) %>%
+  rename(.,LSOA11CD=LSOA.code..2011.,IMD19=Index.of.Multiple.Deprivation..IMD..Score) %>%
+  mutate(.,IMD19=-1*IMD19)
 
 #Join with population and lookup data
 
@@ -79,6 +86,9 @@ IMD2019_LSOA_agg <- IMD2019_LSOA %>%
   ungroup() %>%
   mutate(.,IMD19_decile=ntile(IMD19_CCG_wgt, 10),
          IMD19_quintile=ntile(IMD19_CCG_wgt, 5))
+
+IMD2019_LSOA_agg %>%
+  filter(.,CCG20CDH=="99A")
 
 ##################################################
 ################### SAVE NEW LOOKUP ##############

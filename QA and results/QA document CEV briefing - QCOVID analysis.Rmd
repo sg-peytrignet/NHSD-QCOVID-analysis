@@ -76,8 +76,12 @@ pop_by_LSOA_agg <- pop_by_LSOA %>%
 ################### DEPRIVATION ##############
 ##############################################
 
-IMD2019_LSOA <- fread(paste0(rawdatadir,"Other data/IMD/LSOA/Index_of_Multiple_Deprivation_(December_2019)_Lookup_in_England.csv"), header=TRUE, sep=",", check.names=T) %>%
-  select(.,LSOA11CD,IMD19)
+IMD2019_LSOA <- fread(paste0(rawdatadir,"Other data/IMD/LSOA/File_7_-_All_IoD2019_Scores__Ranks__Deciles_and_Population_Denominators_3.csv"),
+                           header=TRUE, sep=",", check.names=T) %>%
+  select(.,LSOA.code..2011.,
+         Index.of.Multiple.Deprivation..IMD..Score) %>%
+  rename(.,LSOA11CD=LSOA.code..2011.,IMD19=Index.of.Multiple.Deprivation..IMD..Score) %>%
+  mutate(.,IMD19=-1*IMD19)
 
 #Join with population and lookup data
 
@@ -103,7 +107,7 @@ fwrite(IMD2019_LSOA_agg, file = paste0(rawdatadir,"Other data/Lookups/CCG_to_IMD
 
 ## Import population by CCG, IMD scores by CCG and Shielded Patient list by CCG and merge those data sources into one
 
-```{r import.CCG.metrics, eval=FALSE, echo=TRUE, message=FALSE, warning=FALSE}
+```{r import.CCG.metrics, eval=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
 ##############################################
 ################### POPULATION ###############
 ##############################################
@@ -255,6 +259,10 @@ data.QCOVID.chart <- CCG_before_after_data_long %>%
   filter(.,(!is.na(Shielders_pct))&(!is.na(IMD19_quintile))) %>%
   mutate(., IMD19_quintile=ifelse(IMD19_quintile=="1","1 (most deprived)",IMD19_quintile)) %>%
   mutate(., IMD19_quintile=ifelse(IMD19_quintile=="5","5 (least deprived)",IMD19_quintile)) %>%
+  mutate(.,CCG.Name=str_replace_all(CCG.Name,"NHS ","")) %>%
+  mutate(.,CCG.Name=str_replace_all(CCG.Name," CCG","")) %>%
+  mutate(.,before_after=str_replace_all(before_after,"before","Before QCOVID")) %>%
+  mutate(.,before_after=str_replace_all(before_after,"after","After QCOVID")) %>%
   arrange(.,CCG.Name,before_after)
 fwrite(data.QCOVID.chart, file = paste0(briefonedrivedir,"data.QCOVID.chart.csv"), sep = ",")
 ```
